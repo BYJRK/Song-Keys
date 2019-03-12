@@ -2,13 +2,12 @@ from pathlib import Path
 import re
 import xlsxwriter
 import os
-from pypinyin import lazy_pinyin
 from dataclasses import dataclass
 
 
 keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-filename = 'C:\\Users\\suomi\\OneDrive\\笔记\\Notes & Ideas\\歌曲调位总结.md'
-xlsxname = 'C:\\Users\\suomi\\OneDrive\\笔记\\Notes & Ideas\\歌曲调位总结.xlsx'
+filename = '歌曲调位总结.md'
+xlsxname = '歌曲调位总结.xlsx'
 key_pattern = '## ([ABCDEFG]#?)'
 lang_pattern = '### (国语歌曲|外语歌曲|纯音乐)'
 song_pattern = r'\d+\. (?P<name>[^（【『]+)(?:（(?P<info>.+)）)?(?:『(?P<spell>.+)』)?(?:【(?P<keys>.+)】)?'
@@ -93,11 +92,11 @@ def display_key_info(song_list, show_pie=False):
     print(f'Total {total:^14}       {total_chinese:^7}       {total_foreign:^7}       {total_instrum:^12}')
 
 
-
 def write_xlsx(song_list):
     """将歌曲列表输出到外部 xlsx 文档"""
     book = xlsxwriter.Workbook(xlsxname)
     sheet = book.add_worksheet('歌曲列表')
+
     # 列宽
     sheet.set_column('A:A', 18) # 歌曲名
     sheet.set_column('B:B', 12) # 读音

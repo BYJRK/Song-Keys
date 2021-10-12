@@ -38,7 +38,7 @@ def load_sql(filename='songs.json'):
     return data
 
 
-def pie(songs):
+def pie_chart(songs):
     fig, ax = plt.subplots()
     ax.pie(
         [sum(songs['count'][key]) for key in LABELS],
@@ -85,7 +85,7 @@ def rich_table(songs):
 
 def main():
     songs = load_sql()
-    # pie(songs)
+    pie_chart(songs)
     rich_table(songs)
 
 

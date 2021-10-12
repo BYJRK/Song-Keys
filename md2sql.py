@@ -1,19 +1,20 @@
 import re
 import json
 import sqlite3
+import os
 
-keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-filename = '歌曲调号总结.md'
-xlsxname = '歌曲调号总结.xlsx'
-key_pattern = '## ([ABCDEFG]#?)'
-lang_pattern = '### (国语歌曲|外语歌曲|纯音乐)'
-song_pattern = (
-    r'\d+\. (?P<name>[^（【『]+)(?:（(?P<info>.+)）)?(?:『(?P<spell>.+)』)?(?:【(?P<keys>.+)】)?'
-)
-info_pattern = r'(?:(?P<source>《.+》[^，]*))?，?(?P<singer>[^，]+)?，?(?:“(?P<lyric>.+)”)?'
+FILENAME = '歌曲调号总结.md'
 
 
 def load_song_list(filename):
+    # keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+    # xlsxname = '歌曲调号总结.xlsx'
+    key_pattern = '## ([ABCDEFG]#?)'
+    lang_pattern = '### (国语歌曲|外语歌曲|纯音乐)'
+    song_pattern = r'\d+\. (?P<name>[^（【『]+)(?:（(?P<info>.+)）)?(?:『(?P<spell>.+)』)?(?:【(?P<keys>.+)】)?'
+    info_pattern = (
+        r'(?:(?P<source>《.+》[^，]*))?，?(?P<singer>[^，]+)?，?(?:“(?P<lyric>.+)”)?'
+    )
     song_list = []
     with open(filename, 'r', encoding='utf8') as f:
         current_key = None
@@ -71,6 +72,10 @@ def load_song_list(filename):
 
 
 def song_list_to_sql(song_list):
+
+    if os.path.exists('songs.db'):
+        os.remove('songs.db')
+
     con = sqlite3.connect('songs.db')
     c = con.cursor()
 
@@ -111,5 +116,5 @@ def song_list_to_sql(song_list):
 
 
 if __name__ == "__main__":
-    song_list = load_song_list(filename)
+    song_list = load_song_list(FILENAME)
     song_list_to_sql(song_list)

@@ -1,57 +1,33 @@
-import json
 import sqlite3
 import matplotlib.pyplot as plt
 from rich.console import Console
 from rich.table import Table
 
-LABELS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+LABELS = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
 
 
-def load_sql(filename='songs.json'):
-    con = sqlite3.connect('songs.db')
-    langs = ['国%', '外%', '纯%']
-    data = {
-        'total': {
-            'all': con.execute("SELECT COUNT(title) FROM songs").fetchone()[0],
-            'chn': con.execute(
-                f"SELECT COUNT(title) FROM songs WHERE lang LIKE '{langs[0]}'"
-            ).fetchone()[0],
-            'for': con.execute(
-                f"SELECT COUNT(title) FROM songs WHERE lang LIKE '{langs[1]}'"
-            ).fetchone()[0],
-            'ins': con.execute(
-                f"SELECT COUNT(title) FROM songs WHERE lang LIKE '{langs[2]}'"
-            ).fetchone()[0],
-        },
-        'count': {},
-    }
-
-    for key in LABELS:
-        data['count'][key] = [
-            con.execute(
-                "SELECT COUNT(title) FROM songs WHERE lang LIKE (?) AND key= (?)",
-                (lang, key),
-            ).fetchone()[0]
-            for lang in langs
-        ]
-
-    return data
-
-
-def pie_chart(songs):
+def pie_chart(cur: sqlite3.Cursor) -> None:
     fig, ax = plt.subplots()
+
+    counts = [
+        line[0]
+        for line in cur.execute(
+            'select count(key) from songs group by key order by key'
+        ).fetchall()
+    ]
+
     ax.pie(
-        [sum(songs['count'][key]) for key in LABELS],
+        counts,
         labels=LABELS,
         autopct='%1.1f%%',
-        explode=[0.1, 0, 0.1, 0, 0.1, 0, 0, 0.1, 0, 0, 0, 0],
+        explode=[0, 0, 0, 0.1, 0, 0.1, 0, 0.1, 0, 0, 0.1, 0],
     )
     ax.axis('equal')
     plt.show()
     fig.savefig('result.png')
 
 
-def rich_table(songs):
+def rich_table(cur: sqlite3.Cursor) -> None:
     table = Table(show_header=True)
     table.add_column('Key', style='bold')
     table.add_column('Total(percent)', justify='right')
@@ -59,34 +35,51 @@ def rich_table(songs):
     table.add_column('Foreign', justify='right')
     table.add_column('Instrumental', justify='right')
 
-    total = songs['total']['all']
-    ctotal = songs['total']['chn']
-    ftotal = songs['total']['for']
-    itotal = songs['total']['ins']
+    total = cur.execute('select count(title) from songs').fetchone()[0]
+    chn_count, for_count, ins_count = [
+        line[0]
+        for line in cur.execute(
+            'select count(title) from songs group by lang'
+        ).fetchall()
+    ]
+
     for key in LABELS:
-        ss = sum(songs['count'][key])
-        sp = float(ss) / total
-        chn, frn, ins = songs['count'][key]
-        cp, fp, ip = float(chn) / ctotal, float(frn) / ctotal, float(ins) / ctotal
+        key_total = cur.execute(
+            'select count(title) from songs where key = (?)', (key,)
+        ).fetchone()[0]
+        key_percent = float(key_total) / total
+        chn, frn, ins = [
+            line[0]
+            for line in cur.execute(
+                'select count(title) from songs where key = (?) group by lang', (key,)
+            ).fetchall()
+        ]
+        cp, fp, ip = (
+            float(chn) / chn_count,
+            float(frn) / chn_count,
+            float(ins) / chn_count,
+        )
         table.add_row(
             f'{key}',
-            f'{ss:>5} ({sp*100:>5.2f}%)',
+            f'{key_total:>5} ({key_percent*100:>5.2f}%)',
             f'{chn:>6} ({cp*100:>5.2f}%)',
             f'{frn:>6} ({fp*100:>5.2f}%)',
             f'{ins:>6} ({ip*100:>5.2f}%)',
-            end_section=key == 'B',
+            end_section=key == 'G#',
         )
-    table.add_row(
-        'Total', str(total), str(ctotal), str(ftotal), str(itotal), style='bold'
-    )
+    table.add_row('Total', str(total), str(chn_count), str(for_count), str(ins_count))
     console = Console()
     console.print(table)
 
 
 def main():
-    songs = load_sql()
-    pie_chart(songs)
-    rich_table(songs)
+    con = sqlite3.connect('songs.db')
+    cur = con.cursor()
+
+    pie_chart(cur)
+    rich_table(cur)
+
+    con.close()
 
 
 if __name__ == '__main__':

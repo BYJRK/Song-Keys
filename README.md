@@ -34,11 +34,14 @@
 可以运行 `visualize.py` 进行数据的进一步分析，包括生成表格以及扇形图。
 
 ```shell
-python md2sql.py
 python visualize.py
 ```
 
 如果想要查看以前的 Markdown 文件，除了可以在 commit 历史中找到，还可以运行 `sql2md.py` 来生成 Markdown 文档。
+
+```shell
+python sql2md.py
+```
 
 ## 规则
 

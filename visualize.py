@@ -76,7 +76,7 @@ def main():
     con = sqlite3.connect('songs.db')
     cur = con.cursor()
 
-    # pie_chart(cur)
+    pie_chart(cur)
     rich_table(cur)
 
     con.close()
